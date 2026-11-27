@@ -1,0 +1,5 @@
+EcoVinto en VS Code
+
+1. Abre la carpeta ecovinto.
+2. Abre README.md y sigue «Ejecutar en Windows con VS Code».
+3. Para probar la aplicación, sigue GUIA_DEMO_Y_CAPTURAS.md.
