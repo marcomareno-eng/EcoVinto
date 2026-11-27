@@ -1,0 +1,8 @@
+**
+!Dockerfile
+!requirements.txt
+!main.py
+!incidentes/
+!incidentes/**
+**/__pycache__/
+**/*.pyc
