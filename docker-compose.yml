@@ -1,0 +1,19 @@
+services:
+  ecovinto:
+    build: .
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/incidentes.db
+      UPLOAD_DIR: /data/uploads
+      NICEGUI_STORAGE_PATH: /data/sessions
+      HOST: 0.0.0.0
+      PORT: "8080"
+    volumes:
+      - ecovinto_data:/data
+    restart: unless-stopped
+
+volumes:
+  ecovinto_data:
