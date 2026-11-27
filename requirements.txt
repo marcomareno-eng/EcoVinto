@@ -1,0 +1,4 @@
+nicegui>=3.18,<4
+sqlmodel>=0.0.38
+python-dotenv>=1.0
+pillow>=11,<14
