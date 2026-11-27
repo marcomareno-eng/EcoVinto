@@ -1,0 +1,54 @@
+name: Verificación de EcoVinto
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arrancar EcoVinto y comprobar el volumen
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from secrets import token_hex
+          Path(".env").write_text(f"SECRET_KEY={token_hex(32)}\nADMIN_PASSWORD={token_hex(20)}\n")
+          PY
+          docker compose up -d --build --wait
+          curl --fail http://127.0.0.1:8080/healthz
+          docker compose exec -T ecovinto python - <<'PY'
+          from pathlib import Path
+          import sqlite3
+          with sqlite3.connect("/data/incidentes.db") as db:
+              db.execute("UPDATE user SET telefono = 'persistencia-ci' WHERE rol = 'admin'")
+          Path("/data/uploads/ci.txt").write_text("volumen")
+          PY
+          docker compose down
+          docker compose up -d --wait
+          curl --fail http://127.0.0.1:8080/healthz
+          docker compose exec -T ecovinto python - <<'PY'
+          from pathlib import Path
+          import sqlite3
+          with sqlite3.connect("/data/incidentes.db") as db:
+              assert db.execute("SELECT telefono FROM user WHERE rol = 'admin'").fetchone() == ("persistencia-ci",)
+          assert Path("/data/uploads/ci.txt").read_text() == "volumen"
+          PY
+      - name: Mostrar registros si falla
+        if: failure()
+        run: docker compose logs
+      - name: Eliminar contenedores de prueba
+        if: always()
+        run: docker compose down -v
